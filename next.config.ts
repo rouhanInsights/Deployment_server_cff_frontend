@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "calcuttafreshfoods.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com", // ✅ Add Cloudinary
+        pathname: "/**",
+      },
     ],
   },
 };

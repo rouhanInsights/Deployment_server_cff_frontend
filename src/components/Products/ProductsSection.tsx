@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ProductSlider } from "./ProductSlider";
+import Link from "next/link";
 
 type Product = {
   id: string;
@@ -32,7 +33,7 @@ export const ProductsSection = ({
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
           <Button variant="link" className="text-green-600 hover:text-green-700" asChild>
-            <a href={viewAllLink}>View all</a>
+            <Link href={viewAllLink}>View all</Link>
           </Button>
         </div>
 

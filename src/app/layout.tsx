@@ -15,8 +15,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <CartProvider>
           <AuthProvider>
+            <div className="sticky top-0 z-50 bg-white">
+              <Navbar />
+            </div>
             <ProductOfferBanner />
-            <Navbar />
             <main>{children}</main>
             <Toaster
               toastOptions={{

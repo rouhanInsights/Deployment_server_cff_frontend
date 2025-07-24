@@ -70,6 +70,56 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 }
+/* Monday style */
+.monday-disabled {
+  
+  color: #cc0000 !important;
+  pointer-events: none;
+  cursor: not-allowed;
+  border-radius: 6px;
+  position: relative;
+}
+
+/* Wrapper to ensure relative positioning inside button */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip styling */
+.tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: #222;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 6px 10px;
+  position: absolute;
+  z-index: 999;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  font-size: 12px;
+}
+
+/* Show on hover */
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+/* Show on hover */
+.group:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
 
 /* @layer base {
   * {

@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import Image from "next/image";
+import FeedbackModal from "@/components/Orders/FeedbackModal";
 
 type OrderItem = {
   product_id: number;
@@ -17,7 +19,7 @@ type OrderItem = {
 
 type Order = {
   order_id: number;
-  total_price: string; // ✅ comes as string
+  total_price: string;
   status: string;
   order_date: string;
   items: OrderItem[];
@@ -25,8 +27,12 @@ type Order = {
 
 export default function OrdersPage() {
   const { token, user } = useAuth();
+  const { addToCart } = useCart();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -50,6 +56,28 @@ export default function OrdersPage() {
       })
       .finally(() => setLoading(false));
   }, [token, user]);
+
+  const handleBuyAgain = (items: OrderItem[]) => {
+    items.forEach((item) => {
+      addToCart({
+        id: item.product_id.toString(),
+        name: item.name,
+        price: item.price,
+        image: item.image_url,
+      });
+    });
+    router.push("/cart");
+  };
+
+  const openFeedback = (order: Order) => {
+    setSelectedOrder(order);
+    setShowFeedback(true);
+  };
+
+  const closeFeedback = () => {
+    setSelectedOrder(null);
+    setShowFeedback(false);
+  };
 
   if (loading) {
     return <div className="p-8 text-center text-gray-600">Loading orders...</div>;
@@ -92,8 +120,8 @@ export default function OrdersPage() {
                 className="flex items-center gap-4 border rounded-lg p-3"
               >
                 <Image
-                width={200}
-                height={100}
+                  width={200}
+                  height={100}
                   src={item.image_url}
                   alt={item.name}
                   className="w-16 h-16 rounded-md object-cover border"
@@ -108,7 +136,14 @@ export default function OrdersPage() {
             ))}
           </div>
 
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
+            <Button
+              variant="default"
+              onClick={() => handleBuyAgain(order.items)}
+              className="bg-[#8BAD2B] text-white hover:bg-[#74901d]"
+            >
+              Buy Again
+            </Button>
             <Button
               variant="outline"
               onClick={() => router.push(`/orders/success?order_id=${order.order_id}`)}
@@ -127,9 +162,26 @@ export default function OrdersPage() {
             >
               Download Invoice
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => openFeedback(order)}
+              className="text-[#8BAD2B] border-[#8BAD2B]"
+            >
+              Leave Feedback
+            </Button>
           </div>
         </div>
       ))}
+
+      {/* Feedback Modal - safe fallback if da_id is missing */}
+      {showFeedback && selectedOrder && user && (
+        <FeedbackModal
+          isOpen={showFeedback}
+          onClose={closeFeedback}
+          userId={user.user_id}
+          orderId={selectedOrder.order_id} // fallback to 0 if not provided
+        />
+      )}
     </main>
   );
 }
