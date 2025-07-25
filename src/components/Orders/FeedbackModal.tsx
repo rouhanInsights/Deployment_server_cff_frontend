@@ -1,160 +1,118 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dialog } from "@headlessui/react";
-import { X } from "lucide-react";
+import { Star } from "lucide-react";
 
-type FeedbackModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  userId: number;
-  orderId: number;
-};
-
-export default function FeedbackModal({
-  isOpen,
-  onClose,
-  userId,
-  orderId,
-}: FeedbackModalProps) {
+export default function FeedbackModal({ token, productId }: { token: string; productId: number }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [ratingProduct, setRatingProduct] = useState(5);
   const [ratingDA, setRatingDA] = useState(5);
   const [commentProduct, setCommentProduct] = useState("");
   const [commentDA, setCommentDA] = useState("");
-  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async () => {
-    if (!userId || !orderId) {
-      alert("Missing user or order information.");
-      return;
-    }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/feedback`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        rating_product: ratingProduct,
+        comment_product: ratingProduct <= 3 ? commentProduct : "",
+        rating_da: ratingDA,
+        comment_da: ratingDA <= 3 ? commentDA : "",
+      }),
+    });
 
-    if (ratingProduct <= 3 && commentProduct.trim() === "") {
-      alert("Please provide a comment for the product if rating is 3 or below.");
-      return;
-    }
-
-    if (ratingDA <= 3 && commentDA.trim() === "") {
-      alert("Please provide a comment for the delivery agent if rating is 3 or below.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/feedback`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          order_id: orderId,
-          rating_product: ratingProduct,
-          rating_da: ratingDA,
-          comment_product: commentProduct,
-          comment_da: commentDA,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to submit feedback.");
-      }
-
+    if (res.ok) {
       setSubmitted(true);
-    } catch (error: any) {
-      console.error("❌ Feedback error:", error.message);
-      alert(`Failed to submit feedback. ${error.message}`);
-    } finally {
-      setLoading(false);
+      setTimeout(() => setIsOpen(false), 1500);
+    } else {
+      alert("Failed to submit feedback");
     }
-  };
-
-  const renderStars = (value: number, setValue: (v: number) => void) => {
-    return (
-      <div className="flex gap-1 mt-1">
-        {[1, 2, 3, 4, 5].map((val) => (
-          <span
-            key={val}
-            className={`cursor-pointer text-2xl ${
-              val <= value ? "text-yellow-500" : "text-gray-300"
-            }`}
-            onClick={() => setValue(val)}
-          >
-            ★
-          </span>
-        ))}
-      </div>
-    );
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="min-h-screen px-4 flex items-center justify-center bg-black bg-opacity-50">
-        <Dialog.Panel className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <Dialog.Title className="text-xl font-bold">Feedback</Dialog.Title>
-            <button onClick={onClose}>
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+    <>
+      <button
+        className="mt-3 text-sm text-[#8BAD2B] font-medium underline"
+        onClick={() => setIsOpen(true)}
+      >
+        Leave Feedback
+      </button>
 
-          {submitted ? (
-            <p className="text-green-600 font-medium text-center">
-              ✅ Thank you for your feedback!
-            </p>
-          ) : (
-            <div className="space-y-5">
-              {/* Product Rating */}
-              <div>
-                <label className="block font-medium">Product Rating</label>
-                {renderStars(ratingProduct, setRatingProduct)}
-              </div>
+      <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <Dialog.Panel className="w-full max-w-md bg-white rounded-lg shadow-lg p-6 space-y-4">
+            <Dialog.Title className="text-lg font-bold text-gray-800">Feedback</Dialog.Title>
 
-              <div>
-                <label className="block font-medium">Product Comment</label>
-                <textarea
-                  value={commentProduct}
-                  onChange={(e) => setCommentProduct(e.target.value)}
-                  className="w-full border px-3 py-2 rounded-md"
-                  rows={3}
-                  placeholder={
-                    ratingProduct <= 3 ? "Required if rating is 3 or less" : "Optional"
-                  }
-                />
-              </div>
+            {submitted ? (
+              <p className="text-green-600 text-sm">✅ Feedback submitted successfully!</p>
+            ) : (
+              <>
+                {/* Product Rating */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Rating</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((val) => (
+                      <Star
+                        key={val}
+                        className={`w-5 h-5 cursor-pointer ${
+                          val <= ratingProduct ? "text-yellow-400" : "text-gray-300"
+                        }`}
+                        onClick={() => setRatingProduct(val)}
+                      />
+                    ))}
+                  </div>
+                  {ratingProduct <= 3 && (
+                    <textarea
+                      className="mt-2 w-full border rounded p-2 text-sm"
+                      placeholder="What was wrong with the product?"
+                      value={commentProduct}
+                      onChange={(e) => setCommentProduct(e.target.value)}
+                    />
+                  )}
+                </div>
 
-              {/* DA Rating */}
-              <div>
-                <label className="block font-medium">Delivery Agent Rating</label>
-                {renderStars(ratingDA, setRatingDA)}
-              </div>
+                {/* Delivery Agent Rating */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Agent Rating</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((val) => (
+                      <Star
+                        key={val}
+                        className={`w-5 h-5 cursor-pointer ${
+                          val <= ratingDA ? "text-yellow-400" : "text-gray-300"
+                        }`}
+                        onClick={() => setRatingDA(val)}
+                      />
+                    ))}
+                  </div>
+                  {ratingDA <= 3 && (
+                    <textarea
+                      className="mt-2 w-full border rounded p-2 text-sm"
+                      placeholder="What was wrong with the delivery?"
+                      value={commentDA}
+                      onChange={(e) => setCommentDA(e.target.value)}
+                    />
+                  )}
+                </div>
 
-              <div>
-                <label className="block font-medium">Delivery Agent Comment</label>
-                <textarea
-                  value={commentDA}
-                  onChange={(e) => setCommentDA(e.target.value)}
-                  className="w-full border px-3 py-2 rounded-md"
-                  rows={3}
-                  placeholder={ratingDA <= 3 ? "Required if rating is 3 or less" : "Optional"}
-                />
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="mt-4 w-full bg-trendy-500 hover:bg-trendy-600 text-white py-2 rounded-md"
-              >
-                {loading ? "Submitting..." : "Submit Feedback"}
-              </button>
-            </div>
-          )}
-        </Dialog.Panel>
-      </div>
-    </Dialog>
+                <button
+                  className="mt-4 w-full bg-[#8BAD2B] text-white py-2 rounded hover:bg-[#7b9c24]"
+                  onClick={handleSubmit}
+                >
+                  Submit Feedback
+                </button>
+              </>
+            )}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </>
   );
 }
